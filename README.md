@@ -1,3 +1,16 @@
+#Aitum Desktop and DisplayPad worker to sync DisplayPad (and probably MacroPad) with Aitum Desktop
+
+
+
+
+
+
+
+
+
+
+below is the long boring text that mountain provided dont bother reading it i dont care
+
 # DisplayPad-SDK-Demo
 DisplayPad-SDK-Demo shows how to connect to the Mountain DisplayPad using the DisplayPad SDK. DisplayPad-SDK-Demo lets you get started quickly with connecting to the Mountain DisplayPad.
 
