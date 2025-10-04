@@ -1,4 +1,4 @@
-#Aitum Desktop and DisplayPad worker to sync DisplayPad (and probably MacroPad) with Aitum Desktop
+# Aitum Desktop and DisplayPad worker to sync DisplayPad (and probably MacroPad) with Aitum Desktop
 
 
 
