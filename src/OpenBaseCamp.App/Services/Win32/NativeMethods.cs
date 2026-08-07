@@ -90,12 +90,13 @@ internal static class NativeMethods
     public const int ScMonitorPower = 0xF170;
     public static readonly IntPtr HwndBroadcast = new(0xFFFF);
 
+    // SetSuspendState takes BOOLEAN (one byte), not BOOL (four).
     [DllImport("powrprof.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
+    [return: MarshalAs(UnmanagedType.U1)]
     public static extern bool SetSuspendState(
-        [MarshalAs(UnmanagedType.Bool)] bool hibernate,
-        [MarshalAs(UnmanagedType.Bool)] bool forceCritical,
-        [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent);
+        [MarshalAs(UnmanagedType.U1)] bool hibernate,
+        [MarshalAs(UnmanagedType.U1)] bool forceCritical,
+        [MarshalAs(UnmanagedType.U1)] bool disableWakeEvent);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     public static extern int SHEmptyRecycleBin(IntPtr hwnd, string? rootPath, uint flags);

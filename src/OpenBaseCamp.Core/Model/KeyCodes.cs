@@ -57,16 +57,19 @@ public static class KeyCodes
     public static int? FromName(string name) =>
         Entries.FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase))?.VirtualKey;
 
-    /// <summary>True for keys that are sent with KEYEVENTF_EXTENDEDKEY.</summary>
+    /// <summary>
+    /// True for keys that must be sent with KEYEVENTF_EXTENDEDKEY.
+    /// VK_RETURN is deliberately absent: the flag turns the main Enter into Numpad Enter.
+    /// </summary>
     public static bool IsExtended(int virtualKey) => virtualKey is
-        0x21 or 0x22 or 0x23 or 0x24 or 0x25 or 0x26 or 0x27 or 0x28 // page/home/end/arrows
-        or 0x2D or 0x2E // insert / delete
-        or 0x90 // numlock
+        0x21 or 0x22 or 0x23 or 0x24 or 0x25 or 0x26 or 0x27 or 0x28 // page up/down, home, end, arrows
+        or 0x2C // print screen
+        or 0x2D or 0x2E // insert, delete
+        or 0x90 // num lock
         or 0x6F // numpad divide
-        or 0x0D // enter (numpad enter is extended; plain enter is harmless)
         or VkRControl or VkRMenu
-        or VkLWin or 0x5C or 0x5D
-        or >= VkBrowserBack and <= VkLaunchApp2;
+        or VkLWin or 0x5C or 0x5D // left/right win, apps
+        or >= VkBrowserBack and <= VkLaunchApp2; // browser and media keys
 
     public static string Describe(HotkeyModifiers modifiers, int virtualKey)
     {
