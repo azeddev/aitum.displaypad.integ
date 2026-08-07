@@ -1,0 +1,155 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OpenBaseCamp.App.ViewModels"
+        x:Class="OpenBaseCamp.App.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Width="760" Height="680"
+        WindowStartupLocation="CenterOwner"
+        Title="OpenBaseCamp — Settings">
+
+  <TabControl Margin="8">
+
+    <TabItem Header="General">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <CheckBox Content="Start with Windows" IsChecked="{Binding StartWithWindows}" />
+          <CheckBox Content="Start minimised" IsChecked="{Binding StartMinimized}" />
+          <CheckBox Content="Minimise to the notification area" IsChecked="{Binding MinimizeToTray}" />
+          <CheckBox Content="Close to the notification area instead of quitting" IsChecked="{Binding CloseToTray}" />
+          <CheckBox Content="Switch profile automatically with the foreground application"
+                    IsChecked="{Binding AutoSwitchProfileByApp}" />
+
+          <TextBlock Text="Live key refresh (ms)" Classes="h2" />
+          <NumericUpDown Value="{Binding MonitorRefreshMs}" Minimum="250" Maximum="60000" Increment="250" Width="180"
+                         HorizontalAlignment="Left" />
+          <TextBlock Text="How often monitoring keys such as CPU load are redrawn and pushed to the pad."
+                     Classes="hint" />
+
+          <TextBlock Text="Configuration folder" Classes="h2" />
+          <SelectableTextBlock Text="{Binding ConfigLocation}" Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="Device">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <TextBlock Text="{Binding DeviceStatus}" TextWrapping="Wrap" />
+          <Button Content="Scan for devices" Command="{Binding RescanCommand}" HorizontalAlignment="Left" />
+
+          <TextBlock Text="Brightness" Classes="h2" />
+          <ComboBox ItemsSource="{Binding BrightnessSteps}" SelectedItem="{Binding Brightness}" Width="180"
+                    HorizontalAlignment="Left" />
+
+          <TextBlock Text="Display sleep" Classes="h2" />
+          <CheckBox Content="Put the key displays to sleep when idle" IsChecked="{Binding SleepEnabled}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <NumericUpDown Value="{Binding SleepHours}" Minimum="0" Maximum="24" Width="100" />
+            <TextBlock Text="h" VerticalAlignment="Center" />
+            <NumericUpDown Value="{Binding SleepMinutes}" Minimum="0" Maximum="59" Width="100" />
+            <TextBlock Text="m" VerticalAlignment="Center" />
+            <NumericUpDown Value="{Binding SleepSeconds}" Minimum="0" Maximum="59" Width="100" />
+            <TextBlock Text="s" VerticalAlignment="Center" />
+          </StackPanel>
+
+          <TextBlock Text="Grid columns" Classes="h2" />
+          <ComboBox ItemsSource="{Binding ColumnChoices}" SelectedItem="{Binding Columns}" Width="180"
+                    HorizontalAlignment="Left" />
+          <TextBlock Text="The DisplayPad has twelve keys. Change this only if your pad is mounted in a different orientation."
+                     Classes="hint" />
+
+          <TextBlock Text="Firmware key handling" Classes="h2" />
+          <ComboBox ItemsSource="{Binding FirmwareKeyModes}" SelectedItem="{Binding FirmwareKeyMode}" Width="220"
+                    HorizontalAlignment="Left" />
+          <TextBlock Text="While OpenBaseCamp drives the pad the firmware's own key bindings are normally disabled, so one press runs exactly one action. If your keys stop responding, try Leave unchanged."
+                     Classes="hint" />
+
+          <Separator Margin="0,8" />
+          <TextBlock Text="Key mapping" Classes="h2" />
+          <TextBlock Text="{Binding MappingPrompt}" Classes="hint" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Start mapping" Command="{Binding StartMappingCommand}" />
+            <Button Content="Cancel" Command="{Binding CancelMappingCommand}" IsEnabled="{Binding IsMapping}" />
+            <Button Content="Clear" Command="{Binding ClearMappingCommand}" />
+          </StackPanel>
+          <TextBlock Text="{Binding MappingStatus}" Classes="hint" />
+
+          <Separator Margin="0,8" />
+          <TextBlock Text="Maintenance" Classes="h2" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Reset key images" Command="{Binding ResetPicturesCommand}" />
+            <Button Content="Write page to device" Command="{Binding PersistCurrentPageCommand}" />
+            <Button Content="Factory reset" Command="{Binding FactoryResetCommand}" />
+          </StackPanel>
+          <TextBlock Text="Write page to device stores the current page in the pad's own memory so it still shows something when OpenBaseCamp is not running."
+                     Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="OBS Studio">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <CheckBox Content="Enable the OBS Studio integration" IsChecked="{Binding ObsEnabled}" />
+          <TextBlock Text="Host" Classes="h2" />
+          <TextBox Text="{Binding ObsHost}" Width="260" HorizontalAlignment="Left" />
+          <TextBlock Text="Port" Classes="h2" />
+          <NumericUpDown Value="{Binding ObsPort}" Minimum="1" Maximum="65535" Width="180" HorizontalAlignment="Left" />
+          <TextBlock Text="Password" Classes="h2" />
+          <TextBox Text="{Binding ObsPassword}" PasswordChar="•" Width="260" HorizontalAlignment="Left" />
+          <CheckBox Content="Reconnect automatically" IsChecked="{Binding ObsAutoReconnect}" />
+          <Button Content="Apply and connect" Command="{Binding ApplyObsCommand}" HorizontalAlignment="Left" />
+          <TextBlock Text="{Binding ObsStatus}" Classes="hint" />
+          <TextBlock Text="In OBS Studio open Tools → WebSocket Server Settings, enable the server and copy the port and password here."
+                     Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="Aitum">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <CheckBox Content="Enable the Aitum Desktop integration" IsChecked="{Binding AitumEnabled}" />
+          <TextBlock Text="Host" Classes="h2" />
+          <TextBox Text="{Binding AitumHost}" Width="260" HorizontalAlignment="Left" />
+          <TextBlock Text="Port" Classes="h2" />
+          <NumericUpDown Value="{Binding AitumPort}" Minimum="1" Maximum="65535" Width="180" HorizontalAlignment="Left" />
+          <Button Content="Test connection" Command="{Binding TestAitumCommand}" HorizontalAlignment="Left" />
+          <TextBlock Text="{Binding AitumStatus}" Classes="hint" />
+          <TextBlock Text="Aitum's public API listens on port 7777 on the main Aitum instance and has no authentication, so keep it on your local machine."
+                     Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="Firmware">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <TextBlock Text="Firmware update" Classes="h1" />
+          <TextBlock Text="Only use a .bin file supplied by Mountain for the DisplayPad. Do not unplug the pad while the update runs."
+                     Classes="hint" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Choose file…" Command="{Binding ChooseFirmwareCommand}" />
+            <Button Content="Start update" Command="{Binding FlashFirmwareCommand}" />
+          </StackPanel>
+          <TextBlock Text="{Binding FirmwareFile}" Classes="hint" />
+          <ProgressBar Value="{Binding FirmwareProgress}" Minimum="0" Maximum="100" Height="8" />
+          <TextBlock Text="{Binding FirmwareStatus}" Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="About">
+      <StackPanel Margin="14" Spacing="8">
+        <TextBlock Text="OpenBaseCamp" Classes="h1" />
+        <TextBlock Text="{Binding Version}" Classes="hint" />
+        <TextBlock TextWrapping="Wrap"
+                   Text="An open source replacement for Mountain Base Camp, built on the DisplayPad SDK that Mountain published. It drives the pad in software mode: the app renders every key face, uploads it over USB and runs the action when a key is pressed." />
+        <TextBlock TextWrapping="Wrap" Classes="hint"
+                   Text="DisplayPad and Base Camp are trademarks of their respective owners. This project is not affiliated with or endorsed by Mountain." />
+      </StackPanel>
+    </TabItem>
+
+  </TabControl>
+
+</Window>

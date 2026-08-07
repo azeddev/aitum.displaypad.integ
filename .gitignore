@@ -1,8 +1,28 @@
 ﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+# Build output
 ################################################################################
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+publish/
 
-/.vs
-/DisplayPad.SDK.Demo/.vs
-/DisplayPad.SDK.Demo/bin/Debug/net6.0-windows
-/DisplayPad.SDK.Demo/obj
+################################################################################
+# IDE
+################################################################################
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+################################################################################
+# Tooling output
+################################################################################
+preview/
+*.received.*
+TestResults/
+BenchmarkDotNet.Artifacts/

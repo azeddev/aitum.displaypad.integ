@@ -1,0 +1,49 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="OpenBaseCamp.App.App"
+             RequestedThemeVariant="Dark">
+
+  <Application.Styles>
+    <FluentTheme />
+    <!-- WithInterFont() in Program.cs makes Inter the default family. -->
+    <Style Selector="Window">
+      <Setter Property="Background" Value="#FF14141A" />
+    </Style>
+
+    <Style Selector="TextBlock.h1">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <Style Selector="TextBlock.h2">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#FF8A8A9A" />
+      <Setter Property="Margin" Value="0,12,0,4" />
+    </Style>
+
+    <Style Selector="TextBlock.hint">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="#FF7A7A8A" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#FF1C1C24" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="12" />
+      <Setter Property="BorderBrush" Value="#FF2A2A34" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+  </Application.Styles>
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <SolidColorBrush x:Key="AccentBrush" Color="#FF4C9AFF" />
+      <SolidColorBrush x:Key="PanelBrush" Color="#FF1C1C24" />
+      <SolidColorBrush x:Key="SubtleBrush" Color="#FF8A8A9A" />
+    </ResourceDictionary>
+  </Application.Resources>
+
+</Application>

@@ -1,0 +1,69 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OpenBaseCamp.App.ViewModels"
+        x:Class="OpenBaseCamp.App.Views.MacroEditorWindow"
+        x:DataType="vm:MacroEditorViewModel"
+        Width="640" Height="580"
+        WindowStartupLocation="CenterOwner"
+        Title="OpenBaseCamp — Macro">
+
+  <Grid Margin="14" RowDefinitions="Auto,Auto,*,Auto">
+
+    <StackPanel Grid.Row="0" Spacing="8">
+      <TextBlock Text="Recording captures the keys you press while this window has focus." Classes="hint" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="{Binding RecordButtonText}" Command="{Binding ToggleRecordingCommand}" />
+        <Button Content="Clear all" Command="{Binding ClearAllCommand}" />
+      </StackPanel>
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,8">
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Play mode" VerticalAlignment="Center" />
+        <ComboBox ItemsSource="{Binding PlayModes}" SelectedItem="{Binding PlayMode}" Width="160" />
+      </StackPanel>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowRepeatCount}">
+        <TextBlock Text="Repeats" VerticalAlignment="Center" />
+        <NumericUpDown Value="{Binding RepeatCount}" Minimum="1" Maximum="9999" Width="110" />
+      </StackPanel>
+    </Grid>
+
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+      <ListBox Grid.Column="0"
+               ItemsSource="{Binding Steps}"
+               SelectedItem="{Binding SelectedStep}">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:MacroStepViewModel">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="{Binding Description}" VerticalAlignment="Center" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                <NumericUpDown Value="{Binding DelayMs}" Minimum="0" Maximum="600000" Increment="10" Width="120" />
+                <TextBlock Text="ms" VerticalAlignment="Center" />
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <StackPanel Grid.Column="1" Spacing="6" Margin="10,0,0,0" Width="150">
+        <Button Content="Move up" Command="{Binding MoveUpCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="Move down" Command="{Binding MoveDownCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="Remove" Command="{Binding RemoveStepCommand}" HorizontalAlignment="Stretch" />
+        <Separator Margin="0,6" />
+        <TextBlock Text="Add a delay (ms)" Classes="h2" Margin="0" />
+        <NumericUpDown Value="{Binding DelayToAdd}" Minimum="0" Maximum="600000" Increment="50" />
+        <Button Content="Add delay" Command="{Binding AddDelayCommand}" HorizontalAlignment="Stretch" />
+        <TextBlock Text="Add typed text" Classes="h2" Margin="0" />
+        <TextBox Text="{Binding TextToType}" />
+        <Button Content="Add text" Command="{Binding AddTextCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="Add left click" Command="{Binding AddClickCommand}" HorizontalAlignment="Stretch" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="Done" Click="OnClose" IsDefault="True" />
+    </StackPanel>
+
+  </Grid>
+
+</Window>

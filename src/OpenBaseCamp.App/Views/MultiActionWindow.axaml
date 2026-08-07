@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OpenBaseCamp.App.ViewModels"
+        xmlns:views="using:OpenBaseCamp.App.Views"
+        x:Class="OpenBaseCamp.App.Views.MultiActionWindow"
+        x:DataType="vm:MultiActionViewModel"
+        Width="820" Height="620"
+        WindowStartupLocation="CenterOwner"
+        Title="OpenBaseCamp — Multi Action">
+
+  <Grid Margin="14" RowDefinitions="Auto,*,Auto">
+
+    <TextBlock Grid.Row="0" Classes="hint" Margin="0,0,0,10"
+               Text="Steps run top to bottom when the key is pressed. Add a Delay step to pause between them." />
+
+    <Grid Grid.Row="1" ColumnDefinitions="260,Auto,*">
+      <Grid Grid.Column="0" RowDefinitions="*,Auto">
+        <ListBox Grid.Row="0" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:MultiActionStepViewModel">
+              <StackPanel Spacing="1" Margin="0,2">
+                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Detail}" Classes="hint" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Spacing="6" Margin="0,8,0,0">
+          <Button Content="Add step" Command="{Binding AddStepCommand}" HorizontalAlignment="Stretch" />
+          <UniformGrid Columns="3">
+            <Button Content="Up" Command="{Binding MoveUpCommand}" Margin="0,0,3,0" HorizontalAlignment="Stretch" />
+            <Button Content="Down" Command="{Binding MoveDownCommand}" Margin="3,0,3,0" HorizontalAlignment="Stretch" />
+            <Button Content="Remove" Command="{Binding RemoveStepCommand}" Margin="3,0,0,0" HorizontalAlignment="Stretch" />
+          </UniformGrid>
+        </StackPanel>
+      </Grid>
+
+      <Border Grid.Column="1" Width="1" Background="#FF2A2A34" Margin="12,0" />
+
+      <ContentControl Grid.Column="2" Content="{Binding StepEditor}">
+        <ContentControl.ContentTemplate>
+          <DataTemplate x:DataType="vm:KeyEditorViewModel">
+            <views:KeyInspector />
+          </DataTemplate>
+        </ContentControl.ContentTemplate>
+      </ContentControl>
+    </Grid>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="Done" Click="OnClose" IsDefault="True" />
+    </StackPanel>
+
+  </Grid>
+
+</Window>

@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    net8.0-windows is the shipping target: it pulls in the DisplayPad SDK and the Win32
+    services. The plain net8.0 target builds the same UI without any of that, which is what
+    the tests and the UI preview harness use so the interface can be checked without hardware.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net8.0-windows;net8.0</TargetFrameworks>
+    <RootNamespace>OpenBaseCamp.App</RootNamespace>
+    <AssemblyName>OpenBaseCamp</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Platforms>AnyCPU;x64</Platforms>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <!-- The native DisplayPadSDK.dll is x64 only. -->
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.19" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.19" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.19" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.19" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <PackageReference Include="DisplayPad.SDK" Version="1.0.6" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net8.0-windows'">
+    <Compile Remove="Services\Win32\**\*.cs" />
+    <Compile Remove="Device\DisplayPadService.cs" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9" Condition="'$(OS)' != 'Windows_NT'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenBaseCamp.Core\OpenBaseCamp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

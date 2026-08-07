@@ -1,0 +1,159 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OpenBaseCamp.App.ViewModels"
+        xmlns:views="using:OpenBaseCamp.App.Views"
+        x:Class="OpenBaseCamp.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Width="1240" Height="800"
+        MinWidth="1040" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Title="OpenBaseCamp — DisplayPad">
+
+  <Window.Resources>
+    <views:BoolToConnectionBrushConverter x:Key="ConnectionBrush" />
+  </Window.Resources>
+
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <!-- Title bar strip -->
+    <Border Grid.Row="0" Background="#FF1A1A22" Padding="16,10" BorderBrush="#FF2A2A34" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <Ellipse Width="10" Height="10"
+                   Fill="{Binding IsDeviceConnected, Converter={StaticResource ConnectionBrush}}" />
+          <TextBlock Text="{Binding DeviceStatus}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding DeviceDetail}" Classes="hint" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="Brightness" Classes="hint" VerticalAlignment="Center" />
+          <ComboBox ItemsSource="{Binding BrightnessSteps}"
+                    SelectedItem="{Binding Brightness}"
+                    Width="90" />
+          <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Body -->
+    <Grid Grid.Row="1" ColumnDefinitions="260,*,380">
+
+      <!-- Profiles -->
+      <Border Grid.Column="0" Background="#FF17171E" BorderBrush="#FF2A2A34" BorderThickness="0,0,1,0" Padding="12">
+        <Grid RowDefinitions="Auto,*,Auto,Auto">
+          <TextBlock Grid.Row="0" Text="Profiles" Classes="h1" />
+
+          <ListBox Grid.Row="1"
+                   ItemsSource="{Binding Profiles}"
+                   SelectedItem="{Binding SelectedProfile}"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProfileViewModel">
+                <StackPanel Spacing="1" Margin="0,2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding PageSummary}" Classes="hint" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+
+          <StackPanel Grid.Row="2" Spacing="6" Margin="0,10,0,0">
+            <UniformGrid Columns="2" >
+              <Button Content="Add" Command="{Binding AddProfileCommand}" Margin="0,0,3,3" HorizontalAlignment="Stretch" />
+              <Button Content="Rename" Command="{Binding RenameProfileCommand}" Margin="3,0,0,3" HorizontalAlignment="Stretch" />
+              <Button Content="Duplicate" Command="{Binding DuplicateProfileCommand}" Margin="0,0,3,0" HorizontalAlignment="Stretch" />
+              <Button Content="Delete" Command="{Binding DeleteProfileCommand}" Margin="3,0,0,0" HorizontalAlignment="Stretch" />
+            </UniformGrid>
+            <UniformGrid Columns="2">
+              <Button Content="Import" Command="{Binding ImportProfileCommand}" Margin="0,0,3,0" HorizontalAlignment="Stretch" />
+              <Button Content="Export" Command="{Binding ExportProfileCommand}" Margin="3,0,0,0" HorizontalAlignment="Stretch" />
+            </UniformGrid>
+          </StackPanel>
+
+          <StackPanel Grid.Row="3" Spacing="4" Margin="0,14,0,0"
+                      IsVisible="{Binding SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock Text="Activate with these apps" Classes="h2" Margin="0,0,0,2" />
+            <TextBox Text="{Binding SelectedProfile.AutoSwitchApps}"
+                     Watermark="obs64.exe, photoshop.exe"
+                     AcceptsReturn="False" />
+            <TextBlock Text="Comma separated executable names. The profile activates when one of them comes to the foreground."
+                       Classes="hint" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Pad preview -->
+      <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="20">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,14">
+          <Button Content="◀ Back" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" />
+          <Button Content="Home" Command="{Binding GoHomeCommand}" />
+          <TextBlock Text="{Binding Breadcrumb}" VerticalAlignment="Center" FontWeight="SemiBold" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="card" Padding="18" VerticalAlignment="Center">
+          <ItemsControl Name="KeyGrid" ItemsSource="{Binding Keys}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="4" Rows="3" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:KeyViewModel">
+                <Border Margin="7" CornerRadius="10" Padding="3"
+                        Background="#FF0C0C10"
+                        BorderThickness="2"
+                        PointerPressed="OnKeyPointerPressed"
+                        DoubleTapped="OnKeyDoubleTapped">
+                  <Border.Styles>
+                    <Style Selector="Border">
+                      <Setter Property="BorderBrush" Value="Transparent" />
+                    </Style>
+                  </Border.Styles>
+                  <Grid>
+                    <Image Source="{Binding Preview}" Width="118" Height="118" Stretch="Uniform" />
+                    <Border BorderBrush="#FF4C9AFF" BorderThickness="2" CornerRadius="8"
+                            IsVisible="{Binding IsSelected}" />
+                    <TextBlock Text="{Binding PositionLabel}"
+                               Classes="hint"
+                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                               Margin="0,2,4,0" FontSize="9" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,14,0,0">
+          <Button Content="Test press" Command="{Binding PressKeyCommand}" CommandParameter="{Binding SelectedKey}" />
+          <Button Content="Copy" Command="{Binding CopyKeyCommand}" />
+          <Button Content="Paste" Command="{Binding PasteKeyCommand}" />
+          <Button Content="Clear" Command="{Binding ClearKeyCommand}" />
+          <TextBlock Classes="hint" VerticalAlignment="Center"
+                     Text="Drag to swap keys · double-click to run" />
+        </StackPanel>
+      </Grid>
+
+      <!-- Inspector -->
+      <Border Grid.Column="2" Background="#FF17171E" BorderBrush="#FF2A2A34" BorderThickness="1,0,0,0">
+        <ContentControl Content="{Binding Editor}">
+          <ContentControl.ContentTemplate>
+            <DataTemplate x:DataType="vm:KeyEditorViewModel">
+              <views:KeyInspector />
+            </DataTemplate>
+          </ContentControl.ContentTemplate>
+        </ContentControl>
+      </Border>
+    </Grid>
+
+    <!-- Status bar -->
+    <Border Grid.Row="2" Background="#FF1A1A22" BorderBrush="#FF2A2A34" BorderThickness="0,1,0,0" Padding="14,6">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Classes="hint" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="OpenBaseCamp" Classes="hint" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+  </Grid>
+
+</Window>
