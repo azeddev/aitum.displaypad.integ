@@ -4,6 +4,8 @@ using OpenBaseCamp.Core.Config;
 using OpenBaseCamp.Core.Devices;
 using OpenBaseCamp.Core.Integrations.Aitum;
 using OpenBaseCamp.Core.Integrations.Obs;
+using OpenBaseCamp.Core.Integrations.Spotify;
+using OpenBaseCamp.Core.Integrations.Twitch;
 using OpenBaseCamp.Core.Model;
 using OpenBaseCamp.Core.Monitoring;
 using OpenBaseCamp.Core.Rendering;
@@ -23,6 +25,9 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
     private readonly IAudioController _audio;
     private readonly ObsWebSocketClient _obs;
     private readonly AitumClient _aitum;
+    private readonly SpotifyClient _spotify;
+    private readonly TwitchClient _twitch;
+    private readonly IMediaSessionController _mediaSession;
 
     private readonly SemaphoreSlim _renderLock = new(1, 1);
     private readonly byte[]?[] _uploadedHashes = new byte[DisplayPadLayout.KeyCount][];
@@ -45,7 +50,10 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
         ISystemMetricsProvider metrics,
         IAudioController audio,
         ObsWebSocketClient obs,
-        AitumClient aitum)
+        AitumClient aitum,
+        SpotifyClient spotify,
+        TwitchClient twitch,
+        IMediaSessionController mediaSession)
     {
         _device = device;
         _store = store;
@@ -54,6 +62,9 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
         _audio = audio;
         _obs = obs;
         _aitum = aitum;
+        _spotify = spotify;
+        _twitch = twitch;
+        _mediaSession = mediaSession;
 
         _brightness = config.Settings.Device.Brightness;
 
@@ -66,6 +77,9 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
         _device.KeyEvent += OnKeyEvent;
         _device.DeviceStatusChanged += OnDeviceStatusChanged;
         _obs.StateChanged += OnObsStateChanged;
+        _spotify.StateChanged += OnObsStateChanged;
+        _twitch.StateChanged += OnObsStateChanged;
+        _mediaSession.Changed += OnObsStateChanged;
     }
 
     /// <summary>Raised when the on-screen preview should be rebuilt.</summary>
@@ -150,6 +164,9 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
     public async Task ApplyConfigAsync(AppConfig config)
     {
         _config = config;
+        _aitum.ApplySettings(config.Settings.Aitum);
+        _spotify.ApplySettings(config.Settings.Spotify);
+        _twitch.ApplySettings(config.Settings.Twitch);
         _brightness = config.Settings.Device.Brightness;
         _liveTimer.Interval = Math.Max(250, config.Settings.MonitorRefreshMs);
 
@@ -392,6 +409,7 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
     {
         _lastMetrics = _metrics.Sample();
         await RefreshAitumStateAsync().ConfigureAwait(false);
+        await RefreshIntegrationStateAsync().ConfigureAwait(false);
         await RenderAsync().ConfigureAwait(false);
     }
 
@@ -424,11 +442,29 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
         }
     }
 
+    /// <summary>Polls Spotify and Twitch only while a key on the current page needs them.</summary>
+    private async Task RefreshIntegrationStateAsync()
+    {
+        var page = CurrentPage;
+
+        if (_spotify.Enabled && page.Keys.Any(k => k.Action.Kind == ActionKind.Spotify))
+        {
+            await _spotify.RefreshNowPlayingAsync().ConfigureAwait(false);
+        }
+
+        if (_twitch.Enabled && page.Keys.Any(k => k.Action.Kind == ActionKind.Twitch))
+        {
+            await _twitch.RefreshStateAsync().ConfigureAwait(false);
+        }
+    }
+
     /// <summary>Builds the render request for one key, including any live value.</summary>
     public KeyRenderRequest BuildRequest(KeySlot slot, int size)
     {
         var action = slot.Action;
         string? valueText = null;
+        string? titleOverride = null;
+        byte[]? artwork = null;
         double? gauge = null;
         var active = false;
 
@@ -463,15 +499,65 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
             case ActionKind.Macro:
                 active = _executor?.IsRunning(new KeyIdentity(ActiveProfile.Id, CurrentPage.Id, slot.Index)) == true;
                 break;
+
+            case ActionKind.MediaSession:
+            {
+                var media = _mediaSession.Current;
+                active = media.IsPlaying;
+
+                if (action.Settings.MediaSessionCommand == MediaSessionCommand.ShowNowPlaying)
+                {
+                    titleOverride = media.Display;
+                    if (action.Settings.ShowArtwork)
+                    {
+                        artwork = media.Thumbnail;
+                    }
+                }
+
+                break;
+            }
+
+            case ActionKind.Spotify:
+            {
+                active = _spotify.IsActive(action.Settings);
+
+                if (action.Settings.SpotifyCommand == SpotifyCommand.ShowNowPlaying)
+                {
+                    titleOverride = _spotify.NowPlaying.Display;
+                    if (action.Settings.ShowArtwork)
+                    {
+                        artwork = _spotify.Artwork;
+                    }
+                }
+
+                break;
+            }
+
+            case ActionKind.Twitch:
+            {
+                active = _twitch.IsActive(action.Settings);
+                var twitch = _twitch.State;
+
+                valueText = action.Settings.TwitchCommand switch
+                {
+                    TwitchCommand.ShowViewerCount => twitch.IsLive ? twitch.Viewers.ToString() : "-",
+                    TwitchCommand.ShowLiveStatus => twitch.IsLive ? "LIVE" : "Off",
+                    _ => null,
+                };
+
+                break;
+            }
         }
 
         return new KeyRenderRequest
         {
             Appearance = slot.Appearance,
             Size = size,
+            TitleOverride = titleOverride,
             ValueText = valueText,
             Gauge = gauge,
             IsActive = active,
+            ImageOverride = artwork,
             ResolveImagePath = _store.ResolveImage,
         };
     }
@@ -571,6 +657,9 @@ public sealed class PadController : IPadNavigation, IPadDeviceControl, IDisposab
         _device.KeyEvent -= OnKeyEvent;
         _device.DeviceStatusChanged -= OnDeviceStatusChanged;
         _obs.StateChanged -= OnObsStateChanged;
+        _spotify.StateChanged -= OnObsStateChanged;
+        _twitch.StateChanged -= OnObsStateChanged;
+        _mediaSession.Changed -= OnObsStateChanged;
         _renderLock.Dispose();
     }
 }

@@ -5,6 +5,8 @@ using OpenBaseCamp.Core.Config;
 using OpenBaseCamp.Core.Devices;
 using OpenBaseCamp.Core.Integrations.Aitum;
 using OpenBaseCamp.Core.Integrations.Obs;
+using OpenBaseCamp.Core.Integrations.Spotify;
+using OpenBaseCamp.Core.Integrations.Twitch;
 using OpenBaseCamp.Core.Model;
 using OpenBaseCamp.Core.Services;
 
@@ -27,10 +29,18 @@ public sealed class AppHost : IDisposable
         Aitum = new AitumClient();
         Aitum.ApplySettings(Config.Settings.Aitum);
 
+        Spotify = new SpotifyClient();
+        Spotify.ApplySettings(Config.Settings.Spotify);
+
+        Twitch = new TwitchClient();
+        Twitch.ApplySettings(Config.Settings.Twitch);
+
+        MediaSession = PlatformFactory.CreateMediaSession();
+
         Audio = PlatformFactory.CreateAudio();
         Metrics = PlatformFactory.CreateMetrics();
 
-        Controller = new PadController(Hardware, Store, Config, Metrics, Audio, Obs, Aitum);
+        Controller = new PadController(Hardware, Store, Config, Metrics, Audio, Obs, Aitum, Spotify, Twitch, MediaSession);
 
         Executor = new ActionExecutor(new ActionServices
         {
@@ -42,6 +52,9 @@ public sealed class AppHost : IDisposable
             Navigation = Controller,
             Obs = Obs,
             Aitum = Aitum,
+            Spotify = Spotify,
+            Twitch = Twitch,
+            MediaSession = MediaSession,
             ReportError = message => Error?.Invoke(message),
         });
 
@@ -62,6 +75,12 @@ public sealed class AppHost : IDisposable
     public ObsWebSocketClient Obs { get; }
 
     public AitumClient Aitum { get; }
+
+    public SpotifyClient Spotify { get; }
+
+    public TwitchClient Twitch { get; }
+
+    public IMediaSessionController MediaSession { get; }
 
     public IAudioController Audio { get; }
 
@@ -92,6 +111,8 @@ public sealed class AppHost : IDisposable
         {
             _ = Obs.ApplySettingsAsync(Config.Settings.Obs);
         }
+
+        await MediaSession.StartAsync().ConfigureAwait(false);
 
         Controller.Start();
         Controller.InvalidateAll();
@@ -147,6 +168,9 @@ public sealed class AppHost : IDisposable
         Executor.StopAll();
         Controller.Dispose();
         Aitum.Dispose();
+        Spotify.Dispose();
+        Twitch.Dispose();
+        (MediaSession as IDisposable)?.Dispose();
         _ = Obs.DisposeAsync().AsTask();
         (Audio as IDisposable)?.Dispose();
         (Metrics as IDisposable)?.Dispose();

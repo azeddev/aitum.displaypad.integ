@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterOwner"
         Title="OpenBaseCamp — Settings">
 
-  <TabControl Margin="8">
+  <TabControl Name="Tabs" Margin="8">
 
     <TabItem Header="General">
       <ScrollViewer>
@@ -102,6 +102,60 @@
           <TextBlock Text="{Binding ObsStatus}" Classes="hint" />
           <TextBlock Text="In OBS Studio open Tools → WebSocket Server Settings, enable the server and copy the port and password here."
                      Classes="hint" />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="Spotify">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <CheckBox Content="Enable the Spotify integration" IsChecked="{Binding SpotifyEnabled}" />
+
+          <TextBlock TextWrapping="Wrap" Classes="hint"
+                     Text="Spotify requires each user to register their own application, which takes a minute and is free. Go to developer.spotify.com/dashboard, create an app, add the redirect URI below to it, then paste the client id here. No client secret is needed." />
+
+          <TextBlock Text="Client id" Classes="h2" />
+          <TextBox Text="{Binding SpotifyClientId}" Width="380" HorizontalAlignment="Left" />
+
+          <TextBlock Text="Redirect URI (add this to your Spotify app)" Classes="h2" />
+          <TextBox Text="{Binding SpotifyRedirectUri}" Width="380" HorizontalAlignment="Left" />
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Connect Spotify" Command="{Binding ConnectSpotifyCommand}" IsEnabled="{Binding !IsAuthorizing}" />
+            <Button Content="Disconnect" Command="{Binding DisconnectSpotifyCommand}" />
+          </StackPanel>
+          <TextBlock Text="{Binding SpotifyStatus}" Classes="hint" />
+
+          <TextBlock Text="Requested permissions" Classes="h2" />
+          <SelectableTextBlock Text="{Binding SpotifyScopes}" Classes="hint" />
+          <TextBlock TextWrapping="Wrap" Classes="hint"
+                     Text="Reading what is playing works on any account. Changing playback is a Spotify Premium feature and needs an active device. For simple play/pause and track skipping without any of this, use the Now Playing action instead." />
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="Twitch">
+      <ScrollViewer>
+        <StackPanel Margin="14" Spacing="10">
+          <CheckBox Content="Enable the Twitch integration" IsChecked="{Binding TwitchEnabled}" />
+
+          <TextBlock TextWrapping="Wrap" Classes="hint"
+                     Text="Register an application at dev.twitch.tv/console/apps with the redirect URL below. Twitch does not support PKCE, so the client secret is needed to keep the connection alive beyond four hours." />
+
+          <TextBlock Text="Client id" Classes="h2" />
+          <TextBox Text="{Binding TwitchClientId}" Width="380" HorizontalAlignment="Left" />
+
+          <TextBlock Text="Client secret" Classes="h2" />
+          <TextBox Text="{Binding TwitchClientSecret}" PasswordChar="•" Width="380" HorizontalAlignment="Left" />
+
+          <TextBlock Text="OAuth redirect URL (add this to your Twitch app)" Classes="h2" />
+          <TextBox Text="{Binding TwitchRedirectUri}" Width="380" HorizontalAlignment="Left" />
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Connect Twitch" Command="{Binding ConnectTwitchCommand}" IsEnabled="{Binding !IsAuthorizing}" />
+            <Button Content="Disconnect" Command="{Binding DisconnectTwitchCommand}" />
+          </StackPanel>
+          <TextBlock Text="{Binding TwitchStatus}" Classes="hint" />
         </StackPanel>
       </ScrollViewer>
     </TabItem>

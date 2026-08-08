@@ -48,6 +48,59 @@ public enum ActionKind
     Obs,
     AitumRule,
     AitumState,
+    MediaSession,
+    Spotify,
+    Twitch,
+}
+
+/// <summary>
+/// Transport controls that work with whatever is playing through Windows: Spotify,
+/// a browser tab, VLC, anything that registers a media session. Needs no setup.
+/// </summary>
+public enum MediaSessionCommand
+{
+    PlayPause,
+    Play,
+    Pause,
+    Next,
+    Previous,
+    Stop,
+    ShowNowPlaying,
+}
+
+public enum SpotifyCommand
+{
+    PlayPause,
+    Play,
+    Pause,
+    Next,
+    Previous,
+    ToggleShuffle,
+    CycleRepeat,
+    VolumeUp,
+    VolumeDown,
+    SetVolume,
+    SaveTrack,
+    PlayContext,
+    ShowNowPlaying,
+}
+
+public enum TwitchCommand
+{
+    CreateClip,
+    CreateMarker,
+    StartCommercial,
+    SetTitle,
+    SetCategory,
+    SendChatMessage,
+    SendAnnouncement,
+    Shoutout,
+    ToggleEmoteOnly,
+    ToggleSubscriberOnly,
+    ToggleFollowerOnly,
+    ToggleSlowMode,
+    ShowViewerCount,
+    ShowLiveStatus,
 }
 
 [Flags]

@@ -47,7 +47,11 @@ public static class ActionCatalog
 
         new(ActionKind.Monitor, "Monitoring", "PC Monitor", "Show a live value such as CPU load on the key.", "chart"),
 
+        new(ActionKind.MediaSession, "Media", "Now Playing", "Control whatever Windows is playing - Spotify, a browser tab, VLC. No setup.", "play-pause"),
+        new(ActionKind.Spotify, "Media", "Spotify", "Spotify Web API: playback, shuffle, repeat, volume, save track, play a playlist.", "play"),
+
         new(ActionKind.Obs, "OBS Studio", "OBS", "Scenes, streaming, recording, sources and filters.", "stream"),
+        new(ActionKind.Twitch, "Twitch", "Twitch", "Clips, markers, ads, title, category, chat and chat modes.", "camera"),
         new(ActionKind.AitumRule, "Aitum", "Trigger Rule", "Run an Aitum Desktop rule.", "bolt"),
         new(ActionKind.AitumState, "Aitum", "Show State", "Display an Aitum state variable on the key.", "chart"),
     };
@@ -91,6 +95,9 @@ public static class ActionCatalog
             ActionKind.Obs => DescribeObs(s),
             ActionKind.AitumRule => s.AitumRuleName ?? "Aitum rule",
             ActionKind.AitumState => s.AitumStateName ?? "Aitum state",
+            ActionKind.MediaSession => s.MediaSessionCommand.ToString(),
+            ActionKind.Spotify => DescribeSpotify(s),
+            ActionKind.Twitch => DescribeTwitch(s),
             _ => action.Kind.ToString(),
         };
     }
@@ -103,6 +110,23 @@ public static class ActionCatalog
         ObsCommand.ToggleFilter => $"Filter: {s.ObsFilter}",
         ObsCommand.SetTransition => $"Transition: {s.ObsTransition}",
         _ => s.ObsCommand.ToString(),
+    };
+
+    private static string DescribeSpotify(ActionSettings s) => s.SpotifyCommand switch
+    {
+        SpotifyCommand.PlayContext => $"Play {Truncate(s.SpotifyUri, 24)}",
+        SpotifyCommand.SetVolume => $"Volume {s.VolumeLevel}%",
+        _ => s.SpotifyCommand.ToString(),
+    };
+
+    private static string DescribeTwitch(ActionSettings s) => s.TwitchCommand switch
+    {
+        TwitchCommand.SetTitle => $"Title: {Truncate(s.TwitchText, 22)}",
+        TwitchCommand.SetCategory => $"Category: {Truncate(s.TwitchText, 20)}",
+        TwitchCommand.SendChatMessage or TwitchCommand.SendAnnouncement => Truncate(s.TwitchText, 26),
+        TwitchCommand.Shoutout => $"Shoutout {Truncate(s.TwitchText, 18)}",
+        TwitchCommand.StartCommercial => $"Ad break {s.TwitchCommercialSeconds}s",
+        _ => s.TwitchCommand.ToString(),
     };
 
     private static string Truncate(string? value, int max)

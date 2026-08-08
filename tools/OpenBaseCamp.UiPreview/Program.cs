@@ -46,6 +46,25 @@ internal static class Program
         var settings = new SettingsWindow { DataContext = new SettingsViewModel(main) };
         Capture(settings, Path.Combine(output, "04-settings.png"));
 
+        if (settings.FindControl<TabControl>("Tabs") is { } tabs)
+        {
+            tabs.SelectedIndex = 3; // Spotify
+            Capture(settings, Path.Combine(output, "04b-settings-spotify.png"));
+        }
+
+        // Bind a key to Spotify so the new inspector section is exercised.
+        var spotifySlot = host.Controller.CurrentPage.Keys[3];
+        spotifySlot.Action = new KeyAction
+        {
+            Kind = ActionKind.Spotify,
+            Settings = { SpotifyCommand = SpotifyCommand.PlayContext, SpotifyUri = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M" },
+        };
+        spotifySlot.Appearance.IconId = "play";
+        spotifySlot.Appearance.Title = "Focus";
+        main.RefreshKeys();
+        main.SelectedKey = main.Keys[3];
+        Capture(mainWindow, Path.Combine(output, "03b-main-spotify-selected.png"));
+
         var editor = new KeyEditorViewModel(main, main.Keys[0].Slot!);
         var macro = new MacroEditorWindow { DataContext = new MacroEditorViewModel(main, editor) };
         Capture(macro, Path.Combine(output, "05-macro.png"));
@@ -58,9 +77,49 @@ internal static class Program
             Core.Rendering.KeyImageRenderer.RenderPng(host.Controller.BuildRequest(
                 host.Controller.CurrentPage.Keys[6], DisplayPadLayout.KeyPixels)));
 
+        // A now-playing key with stand-in album art, at device size.
+        File.WriteAllBytes(Path.Combine(output, "08-nowplaying-102px.png"),
+            Core.Rendering.KeyImageRenderer.RenderPng(new Core.Rendering.KeyRenderRequest
+            {
+                Appearance = new KeyAppearance
+                {
+                    BackgroundColor = "#FF101014",
+                    Title = "Chvrches — The Mother We Share",
+                    TitleSize = 13,
+                    IconFit = IconFit.Cover,
+                },
+                ImageOverride = FakeAlbumArt(),
+                Size = DisplayPadLayout.KeyPixels,
+                IsActive = true,
+            }));
+
         host.Dispose();
         Console.WriteLine($"Wrote screenshots to {Path.GetFullPath(output)}");
         return 0;
+    }
+
+    /// <summary>A stand-in cover so artwork rendering can be reviewed without a Spotify account.</summary>
+    private static byte[] FakeAlbumArt()
+    {
+        using var bitmap = new SkiaSharp.SKBitmap(300, 300);
+        using (var canvas = new SkiaSharp.SKCanvas(bitmap))
+        {
+            using var shader = SkiaSharp.SKShader.CreateLinearGradient(
+                new SkiaSharp.SKPoint(0, 0),
+                new SkiaSharp.SKPoint(300, 300),
+                new[] { new SkiaSharp.SKColor(0x1D, 0xB9, 0x54), new SkiaSharp.SKColor(0x10, 0x3A, 0x8A) },
+                null,
+                SkiaSharp.SKShaderTileMode.Clamp);
+            using var paint = new SkiaSharp.SKPaint { Shader = shader };
+            canvas.DrawRect(new SkiaSharp.SKRect(0, 0, 300, 300), paint);
+
+            using var disc = new SkiaSharp.SKPaint { Color = new SkiaSharp.SKColor(0, 0, 0, 90), IsAntialias = true };
+            canvas.DrawCircle(150, 150, 92, disc);
+        }
+
+        using var image = SkiaSharp.SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
     }
 
     private static void Capture(Window window, string path)

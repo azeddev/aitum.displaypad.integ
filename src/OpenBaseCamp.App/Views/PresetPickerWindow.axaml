@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:config="using:OpenBaseCamp.Core.Config"
+        x:Class="OpenBaseCamp.App.Views.PresetPickerWindow"
+        Width="520" Height="480"
+        WindowStartupLocation="CenterOwner"
+        Title="OpenBaseCamp — Add a preset page">
+
+  <Grid Margin="16" RowDefinitions="Auto,*,Auto">
+    <TextBlock Grid.Row="0" Classes="hint" Margin="0,0,0,10" TextWrapping="Wrap"
+               Text="Adds a ready-made page to this profile and puts a folder key for it on the first free key of the current page." />
+
+    <ListBox Grid.Row="1" Name="PackList">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="config:PresetPack">
+          <StackPanel Spacing="2" Margin="0,4">
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Description}" Classes="hint" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="Cancel" Click="OnCancel" IsCancel="True" />
+      <Button Content="Add page" Click="OnAccept" IsDefault="True" />
+    </StackPanel>
+  </Grid>
+
+</Window>

@@ -24,4 +24,10 @@ public sealed class KeyRenderRequest
 
     /// <summary>Resolves <see cref="KeyAppearance.ImageFile"/> to an absolute path.</summary>
     public Func<string, string?>? ResolveImagePath { get; init; }
+
+    /// <summary>
+    /// Encoded image drawn in place of the icon and any configured image - used for
+    /// album and thumbnail art on now-playing keys.
+    /// </summary>
+    public byte[]? ImageOverride { get; init; }
 }

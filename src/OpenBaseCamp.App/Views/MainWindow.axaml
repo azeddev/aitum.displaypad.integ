@@ -92,10 +92,12 @@
         </StackPanel>
 
         <Border Grid.Row="1" Classes="card" Padding="18" VerticalAlignment="Center">
+          <!-- The pad is a wide 6x2 strip; the Viewbox scales it to whatever width is free. -->
+          <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
           <ItemsControl Name="KeyGrid" ItemsSource="{Binding Keys}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
-                <UniformGrid Columns="4" Rows="3" />
+                <UniformGrid Columns="{Binding GridColumns}" Rows="{Binding GridRows}" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
@@ -123,6 +125,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          </Viewbox>
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,14,0,0">
@@ -130,6 +133,7 @@
           <Button Content="Copy" Command="{Binding CopyKeyCommand}" />
           <Button Content="Paste" Command="{Binding PasteKeyCommand}" />
           <Button Content="Clear" Command="{Binding ClearKeyCommand}" />
+          <Button Content="Add preset page…" Command="{Binding AddPresetPageCommand}" />
           <TextBlock Classes="hint" VerticalAlignment="Center"
                      Text="Drag to swap keys · double-click to run" />
         </StackPanel>

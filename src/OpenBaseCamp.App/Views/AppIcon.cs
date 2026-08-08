@@ -19,7 +19,7 @@ public static class AppIcon
 
             var scale = size / 64f;
             using var body = new SKPaint { IsAntialias = true, Color = new SKColor(0x1C, 0x1C, 0x24) };
-            canvas.DrawRoundRect(new SKRect(2 * scale, 6 * scale, 62 * scale, 58 * scale), 8 * scale, 8 * scale, body);
+            canvas.DrawRoundRect(new SKRect(1 * scale, 16 * scale, 63 * scale, 48 * scale), 6 * scale, 6 * scale, body);
 
             var colors = new[]
             {
@@ -28,14 +28,14 @@ public static class AppIcon
             };
 
             using var key = new SKPaint { IsAntialias = true };
-            for (var row = 0; row < 3; row++)
+            for (var row = 0; row < 2; row++)
             {
-                for (var column = 0; column < 4; column++)
+                for (var column = 0; column < 6; column++)
                 {
-                    var x = (8 + column * 13) * scale;
-                    var y = (12 + row * 13) * scale;
-                    key.Color = colors[(row + column) % colors.Length].WithAlpha((byte)(row == 1 ? 255 : 180));
-                    canvas.DrawRoundRect(new SKRect(x, y, x + 10 * scale, y + 10 * scale), 2.5f * scale, 2.5f * scale, key);
+                    var x = (4 + column * 10) * scale;
+                    var y = (20 + row * 12) * scale;
+                    key.Color = colors[(row + column) % colors.Length].WithAlpha(row == 0 ? (byte)255 : (byte)190);
+                    canvas.DrawRoundRect(new SKRect(x, y, x + 8 * scale, y + 8 * scale), 2f * scale, 2f * scale, key);
                 }
             }
         }

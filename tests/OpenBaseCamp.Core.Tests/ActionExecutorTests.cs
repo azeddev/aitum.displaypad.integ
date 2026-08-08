@@ -1,6 +1,8 @@
 using OpenBaseCamp.Core.Actions;
 using OpenBaseCamp.Core.Integrations.Aitum;
 using OpenBaseCamp.Core.Integrations.Obs;
+using OpenBaseCamp.Core.Integrations.Spotify;
+using OpenBaseCamp.Core.Integrations.Twitch;
 using OpenBaseCamp.Core.Model;
 using OpenBaseCamp.Core.Services;
 using Xunit;
@@ -129,6 +131,26 @@ internal sealed class FakeNavigation : IPadNavigation
     }
 }
 
+internal sealed class RecordingMediaSession : IMediaSessionController
+{
+    public List<MediaSessionCommand> Calls { get; } = new();
+
+    public bool Available { get; set; } = true;
+
+    public MediaSessionInfo Current { get; set; } = MediaSessionInfo.Empty;
+
+    public event Action? Changed;
+
+    public Task StartAsync() => Task.CompletedTask;
+
+    public Task<bool> ExecuteAsync(MediaSessionCommand command, CancellationToken cancellationToken = default)
+    {
+        Calls.Add(command);
+        Changed?.Invoke();
+        return Task.FromResult(Available);
+    }
+}
+
 public class ActionExecutorTests
 {
     private readonly RecordingInput _input = new();
@@ -137,6 +159,7 @@ public class ActionExecutorTests
     private readonly FakeAudio _audio = new();
     private readonly FakeDevice _device = new();
     private readonly FakeNavigation _navigation = new();
+    private readonly RecordingMediaSession _mediaSession = new();
     private readonly List<string> _errors = new();
 
     private ActionExecutor CreateExecutor() => new(new ActionServices
@@ -149,6 +172,9 @@ public class ActionExecutorTests
         Navigation = _navigation,
         Obs = new ObsWebSocketClient(),
         Aitum = new AitumClient(),
+        Spotify = new SpotifyClient(),
+        Twitch = new TwitchClient(),
+        MediaSession = _mediaSession,
         ReportError = _errors.Add,
     });
 
@@ -409,6 +435,75 @@ public class ActionExecutorTests
 
         Assert.Single(_errors);
         Assert.Contains("not connected", _errors[0], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Media_session_commands_reach_the_controller()
+    {
+        var executor = CreateExecutor();
+        await executor.ExecuteAsync(new KeyAction
+        {
+            Kind = ActionKind.MediaSession,
+            Settings = { MediaSessionCommand = MediaSessionCommand.Next },
+        }, CancellationToken.None);
+
+        Assert.Equal(new[] { MediaSessionCommand.Next }, _mediaSession.Calls);
+    }
+
+    [Fact]
+    public async Task A_now_playing_key_is_display_only()
+    {
+        var executor = CreateExecutor();
+        await executor.ExecuteAsync(new KeyAction
+        {
+            Kind = ActionKind.MediaSession,
+            Settings = { MediaSessionCommand = MediaSessionCommand.ShowNowPlaying },
+        }, CancellationToken.None);
+
+        Assert.Empty(_mediaSession.Calls);
+    }
+
+    [Fact]
+    public async Task A_media_command_with_no_session_reports_instead_of_throwing()
+    {
+        _mediaSession.Available = false;
+        var executor = CreateExecutor();
+
+        await executor.OnKeyDownAsync(Key(), new KeyAction
+        {
+            Kind = ActionKind.MediaSession,
+            Settings = { MediaSessionCommand = MediaSessionCommand.PlayPause },
+        });
+
+        Assert.Single(_errors);
+    }
+
+    [Fact]
+    public async Task Spotify_reports_that_it_is_not_connected_rather_than_throwing()
+    {
+        var executor = CreateExecutor();
+        await executor.OnKeyDownAsync(Key(), new KeyAction
+        {
+            Kind = ActionKind.Spotify,
+            Settings = { SpotifyCommand = SpotifyCommand.Next },
+        });
+
+        Assert.Single(_errors);
+        Assert.Contains("Spotify", _errors[0], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Twitch_reports_that_it_is_not_connected_rather_than_throwing()
+    {
+        var executor = CreateExecutor();
+        await executor.OnKeyDownAsync(Key(), new KeyAction
+        {
+            Kind = ActionKind.Twitch,
+            Settings = { TwitchCommand = TwitchCommand.CreateClip },
+        });
+
+        Assert.Single(_errors);
+        Assert.Contains("Twitch", _errors[0], StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

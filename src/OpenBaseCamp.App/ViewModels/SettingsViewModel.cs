@@ -39,6 +39,15 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _firmwareStatus = string.Empty;
 
+    [ObservableProperty]
+    private string _spotifyStatus = string.Empty;
+
+    [ObservableProperty]
+    private string _twitchStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _isAuthorizing;
+
     public SettingsViewModel(MainViewModel main)
     {
         _main = main;
@@ -59,7 +68,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<FirmwareKeyMode> FirmwareKeyModes { get; } = Enum.GetValues<FirmwareKeyMode>();
 
-    public IReadOnlyList<int> ColumnChoices { get; } = new[] { 2, 3, 4, 6 };
+    public IReadOnlyList<int> ColumnChoices { get; } = new[] { 6, 4, 3, 2 };
 
     public string ConfigLocation => _host.Store.RootDirectory;
 
@@ -202,7 +211,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         {
             Device.Columns = value;
             OnPropertyChanged();
-            _main.RefreshKeys();
+            _main.RefreshGridShape();
         }
     }
 
@@ -540,6 +549,183 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         else
         {
             AitumStatus = $"No response from {_host.Aitum.BaseUrl}: {_host.Aitum.LastError}";
+        }
+    }
+
+    // ---- Spotify ------------------------------------------------------------
+
+    public bool SpotifyEnabled
+    {
+        get => Settings.Spotify.Enabled;
+        set
+        {
+            Settings.Spotify.Enabled = value;
+            OnPropertyChanged();
+            _host.Spotify.ApplySettings(Settings.Spotify);
+        }
+    }
+
+    public string SpotifyClientId
+    {
+        get => Settings.Spotify.ClientId;
+        set
+        {
+            Settings.Spotify.ClientId = value.Trim();
+            OnPropertyChanged();
+            _host.Spotify.ApplySettings(Settings.Spotify);
+        }
+    }
+
+    public string SpotifyRedirectUri
+    {
+        get => Settings.Spotify.RedirectUri;
+        set
+        {
+            Settings.Spotify.RedirectUri = value.Trim();
+            OnPropertyChanged();
+            _host.Spotify.ApplySettings(Settings.Spotify);
+        }
+    }
+
+    public string SpotifyScopes => string.Join(" ", _host.Spotify.Scopes);
+
+    [RelayCommand]
+    private async Task ConnectSpotifyAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Settings.Spotify.ClientId))
+        {
+            SpotifyStatus = "Enter the client id from your Spotify application first.";
+            return;
+        }
+
+        Settings.Spotify.Enabled = true;
+        OnPropertyChanged(nameof(SpotifyEnabled));
+        _host.Spotify.ApplySettings(Settings.Spotify);
+
+        IsAuthorizing = true;
+        SpotifyStatus = "A browser window has opened. Approve the request there.";
+
+        var error = await _host.Spotify.AuthorizeAsync(OpenBrowser);
+        IsAuthorizing = false;
+
+        if (error is not null)
+        {
+            SpotifyStatus = error;
+            return;
+        }
+
+        _host.SaveConfig();
+        await _host.Spotify.RefreshNowPlayingAsync(force: true);
+        SpotifyStatus = $"Connected. {_host.Spotify.NowPlaying.Display}";
+    }
+
+    [RelayCommand]
+    private void DisconnectSpotify()
+    {
+        _host.Spotify.SignOut();
+        _host.SaveConfig();
+        SpotifyStatus = "Disconnected.";
+    }
+
+    // ---- Twitch -------------------------------------------------------------
+
+    public bool TwitchEnabled
+    {
+        get => Settings.Twitch.Enabled;
+        set
+        {
+            Settings.Twitch.Enabled = value;
+            OnPropertyChanged();
+            _host.Twitch.ApplySettings(Settings.Twitch);
+        }
+    }
+
+    public string TwitchClientId
+    {
+        get => Settings.Twitch.ClientId;
+        set
+        {
+            Settings.Twitch.ClientId = value.Trim();
+            OnPropertyChanged();
+            _host.Twitch.ApplySettings(Settings.Twitch);
+        }
+    }
+
+    public string TwitchClientSecret
+    {
+        get => Settings.Twitch.ClientSecret;
+        set
+        {
+            Settings.Twitch.ClientSecret = value.Trim();
+            OnPropertyChanged();
+            _host.Twitch.ApplySettings(Settings.Twitch);
+        }
+    }
+
+    public string TwitchRedirectUri
+    {
+        get => Settings.Twitch.RedirectUri;
+        set
+        {
+            Settings.Twitch.RedirectUri = value.Trim();
+            OnPropertyChanged();
+            _host.Twitch.ApplySettings(Settings.Twitch);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectTwitchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Settings.Twitch.ClientId) || string.IsNullOrWhiteSpace(Settings.Twitch.ClientSecret))
+        {
+            TwitchStatus = "Enter both the client id and the client secret first.";
+            return;
+        }
+
+        Settings.Twitch.Enabled = true;
+        OnPropertyChanged(nameof(TwitchEnabled));
+        _host.Twitch.ApplySettings(Settings.Twitch);
+
+        IsAuthorizing = true;
+        TwitchStatus = "A browser window has opened. Approve the request there.";
+
+        var error = await _host.Twitch.AuthorizeAsync(OpenBrowser);
+        IsAuthorizing = false;
+
+        if (error is not null)
+        {
+            TwitchStatus = error;
+            return;
+        }
+
+        _host.SaveConfig();
+        await _host.Twitch.RefreshStateAsync(force: true);
+        var state = _host.Twitch.State;
+        TwitchStatus = $"Connected as {state.DisplayName ?? Settings.Twitch.Login}. " +
+                       (state.IsLive ? $"Live with {state.Viewers} viewers." : "Currently offline.");
+    }
+
+    [RelayCommand]
+    private void DisconnectTwitch()
+    {
+        _host.Twitch.SignOut();
+        _host.SaveConfig();
+        TwitchStatus = "Disconnected.";
+    }
+
+    private void OpenBrowser(string url)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            _main.ReportError($"Could not open the browser: {ex.Message}. Open this URL manually: {url}");
         }
     }
 

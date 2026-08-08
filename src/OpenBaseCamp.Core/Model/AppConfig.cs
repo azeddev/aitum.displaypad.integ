@@ -33,6 +33,33 @@ public sealed class AitumSettings
     public int Port { get; set; } = 7777;
 }
 
+/// <summary>
+/// Spotify uses the PKCE flow, so only a client id is needed. The user registers their own
+/// application at developer.spotify.com and adds <see cref="RedirectUri"/> to it.
+/// </summary>
+public sealed class SpotifySettings
+{
+    public bool Enabled { get; set; }
+    public string ClientId { get; set; } = string.Empty;
+    public string RedirectUri { get; set; } = "http://127.0.0.1:8888/callback";
+    public Integrations.Auth.OAuthTokens? Tokens { get; set; }
+}
+
+/// <summary>
+/// Twitch has no PKCE support, so it needs the client secret from the user's own
+/// application at dev.twitch.tv in order to issue a refresh token.
+/// </summary>
+public sealed class TwitchSettings
+{
+    public bool Enabled { get; set; }
+    public string ClientId { get; set; } = string.Empty;
+    public string ClientSecret { get; set; } = string.Empty;
+    public string RedirectUri { get; set; } = "http://localhost:3000/callback";
+    public string? UserId { get; set; }
+    public string? Login { get; set; }
+    public Integrations.Auth.OAuthTokens? Tokens { get; set; }
+}
+
 public sealed class DeviceSettings
 {
     /// <summary>0/25/50/75/100 - the only values the firmware accepts.</summary>
@@ -68,6 +95,8 @@ public sealed class AppSettings
     public DeviceSettings Device { get; set; } = new();
     public ObsSettings Obs { get; set; } = new();
     public AitumSettings Aitum { get; set; } = new();
+    public SpotifySettings Spotify { get; set; } = new();
+    public TwitchSettings Twitch { get; set; } = new();
 }
 
 /// <summary>Everything persisted to disk.</summary>

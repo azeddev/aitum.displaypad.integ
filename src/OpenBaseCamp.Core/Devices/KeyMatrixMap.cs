@@ -48,9 +48,11 @@ public static class KeyMatrixMap
         }
 
         // Row in the high byte, column in the low byte (either 0- or 1-based).
+        var rows = DisplayPadLayout.RowsFor(columns);
         var high = (matrix >> 8) & 0xFF;
         var low = matrix & 0xFF;
-        if (high is > 0 and <= 4 && low is > 0 and <= 6)
+
+        if (high > 0 && high <= rows && low > 0 && low <= columns)
         {
             var index = (high - 1) * columns + (low - 1);
             if (index < DisplayPadLayout.KeyCount)
@@ -59,7 +61,7 @@ public static class KeyMatrixMap
             }
         }
 
-        if (high < 4 && low < 6)
+        if (high < rows && low < columns)
         {
             var index = high * columns + low;
             if (index < DisplayPadLayout.KeyCount)

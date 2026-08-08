@@ -151,17 +151,28 @@ public class KeyMatrixMapTests
     public void Guess_accepts_a_one_based_matrix_beyond_the_zero_based_range() =>
         Assert.Equal(11, KeyMatrixMap.Guess(12));
 
+    // Row in the high byte, column in the low byte, over the pad's 6 x 2 grid.
     [Theory]
     [InlineData(0x0101, 0)]
-    [InlineData(0x0104, 3)]
-    [InlineData(0x0201, 4)]
-    [InlineData(0x0304, 11)]
+    [InlineData(0x0106, 5)]
+    [InlineData(0x0201, 6)]
+    [InlineData(0x0206, 11)]
     public void Guess_decodes_a_one_based_row_column_matrix(int matrix, int expected) =>
         Assert.Equal(expected, KeyMatrixMap.Guess(matrix));
 
+    [Theory]
+    [InlineData(0x7F7F)]
+    [InlineData(0x0304)] // a third row does not exist on a 6 x 2 pad
+    public void Guess_returns_unknown_for_a_code_outside_the_pad(int matrix) =>
+        Assert.Equal(KeyMatrixMap.Unknown, KeyMatrixMap.Guess(matrix));
+
     [Fact]
-    public void Guess_returns_unknown_for_a_code_outside_the_pad() =>
-        Assert.Equal(KeyMatrixMap.Unknown, KeyMatrixMap.Guess(0x7F7F));
+    public void Guess_follows_a_non_default_column_count()
+    {
+        // Same code, read as a 4-column pad: row 2, column 1 is index 4 rather than 6.
+        Assert.Equal(6, KeyMatrixMap.Guess(0x0201));
+        Assert.Equal(4, KeyMatrixMap.Guess(0x0201, columns: 4));
+    }
 
     [Fact]
     public void A_learned_map_wins_over_the_heuristic()

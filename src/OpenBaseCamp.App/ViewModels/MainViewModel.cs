@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenBaseCamp.App.Views;
+using OpenBaseCamp.Core.Config;
 using OpenBaseCamp.Core.Model;
 
 namespace OpenBaseCamp.App.ViewModels;
@@ -75,6 +76,19 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<string> LogLines { get; } = new();
 
     public IReadOnlyList<int> BrightnessSteps { get; } = BrightnessLevels.All;
+
+    /// <summary>Columns in the on-screen pad preview. The DisplayPad is 6 x 2.</summary>
+    public int GridColumns => _host.Config.Settings.Device.Columns;
+
+    public int GridRows => DisplayPadLayout.RowsFor(GridColumns);
+
+    /// <summary>Called when the column count changes so the preview re-lays out.</summary>
+    public void RefreshGridShape()
+    {
+        OnPropertyChanged(nameof(GridColumns));
+        OnPropertyChanged(nameof(GridRows));
+        RefreshKeys();
+    }
 
     public bool StartMinimized => _host.Config.Settings.StartMinimized;
 
@@ -474,6 +488,44 @@ public sealed partial class MainViewModel : ObservableObject
 
         var window = new MultiActionWindow { DataContext = new MultiActionViewModel(this, editor) };
         _ = window.ShowDialog(_window);
+    }
+
+    [RelayCommand]
+    private async Task AddPresetPageAsync()
+    {
+        if (await PresetPickerWindow.ShowAsync(_window) is not { } pack)
+        {
+            return;
+        }
+
+        var controller = _host.Controller;
+        var profile = controller.ActiveProfile;
+        var current = controller.CurrentPage;
+
+        var free = current.Keys.FirstOrDefault(k => k.IsEmpty);
+        if (free is null)
+        {
+            ReportError("This page is full. Clear a key first, then add the preset.");
+            return;
+        }
+
+        var page = PresetPacks.CreatePage(pack, current.Id);
+        profile.Pages.Add(page);
+
+        free.Action = new KeyAction { Kind = ActionKind.Folder, Settings = { TargetPageId = page.Id } };
+        free.Appearance.IconId = pack.Icon;
+        free.Appearance.Title = pack.Name;
+
+        _host.SaveConfig();
+        _host.Controller.InvalidateAll();
+
+        foreach (var key in Keys)
+        {
+            key.Invalidate();
+        }
+
+        RefreshNavigation();
+        StatusMessage = $"Added the {pack.Name} page.";
     }
 
     public Page CreateFolderPage(string name)

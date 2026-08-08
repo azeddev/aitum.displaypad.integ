@@ -9,6 +9,10 @@ faces itself, uploads them over USB, listens for key presses and runs the bound 
 is what makes folders, live PC monitoring and third-party integrations possible — the same
 model Base Camp used.
 
+The pad is a landscape strip of **6 columns × 2 rows**. The SDK confirms it: `SetPanelImage`
+defaults to `right = 799, bottom = 239`, so the panel is 800×240, and 6×2 is the only
+arrangement of twelve keys whose cells (133×120) can hold a 102×102 key image.
+
 ![Twelve key grid with the inspector open](docs/screenshot-main.png)
 
 ---
@@ -26,8 +30,16 @@ model Base Camp used.
 | Navigation | Folder (nested pages), Back, Home, Switch/Next/Previous profile |
 | Device | Brightness set/step/cycle, sleep the key displays |
 | Monitoring | CPU, RAM (% or GB), GPU, disk, network up/down, clock, date, master volume |
+| Media | **Now Playing** — play/pause, next, previous, stop and a live track readout with album art, for whatever Windows is playing |
+| Media | **Spotify** — play/pause, skip, shuffle, repeat, volume, save to Liked Songs, start a playlist, now playing with cover art |
 | OBS Studio | Scenes, stream, record, pause, replay buffer, source visibility, input mute, filters, transitions, virtual cam, studio mode, browser refresh, scene collections |
+| Twitch | Create clip, stream marker, ad break, set title, set category, chat message, announcement, shoutout, emote/subscriber/follower/slow mode toggles, live viewer count |
 | Aitum | Trigger an Aitum Desktop rule, show an Aitum state variable on a key |
+
+**Preset pages** — one click adds a ready-made page: Photoshop, Premiere Pro, Illustrator,
+DaVinci Resolve, Discord, OBS, a streaming deck and a media deck. For the creative apps,
+Base Camp's "integrations" were curated shortcut sets, which is exactly what these are; the
+OBS, Twitch and media packs use the real integrations.
 
 **Profiles and pages** — unlimited profiles, each with a tree of pages. A Folder key opens a
 sub-page (new pages come with a Back key already placed). Profiles can activate automatically
@@ -58,7 +70,8 @@ paste keys, import/export profiles as JSON.
 
 ## Requirements
 
-- Windows 10 or 11, **x64** (the SDK's native `DisplayPadSDK.dll` is x64 only)
+- Windows 10 1809 or later, or Windows 11, **x64** (the SDK's native `DisplayPadSDK.dll` is
+  x64 only; the Now Playing integration uses the Windows media-session API)
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) to build; the .NET 8 Desktop
   Runtime to run a framework-dependent build
 - A Mountain DisplayPad
@@ -68,13 +81,13 @@ paste keys, import/export profiles as JSON.
 ```powershell
 git clone https://github.com/azeddev/aitum.displaypad.integ
 cd aitum.displaypad.integ
-dotnet run --project src/OpenBaseCamp.App -f net8.0-windows
+dotnet run --project src/OpenBaseCamp.App -f net8.0-windows10.0.19041.0
 ```
 
 To produce something you can copy elsewhere:
 
 ```powershell
-dotnet publish src/OpenBaseCamp.App -f net8.0-windows -c Release -r win-x64 --self-contained false -o publish
+dotnet publish src/OpenBaseCamp.App -f net8.0-windows10.0.19041.0 -c Release -r win-x64 --self-contained false -o publish
 ```
 
 `publish\OpenBaseCamp.exe` is the app. `DisplayPadSDK.dll` is copied next to it by the SDK
@@ -107,6 +120,25 @@ dotnet test
 enable the server, then copy the port (4455 by default) and password across. OpenBaseCamp
 speaks obs-websocket v5 directly, with no extra plugin.
 
+**Now Playing** — nothing to configure. It talks to the Windows media session, so the same
+keys control Spotify, a YouTube tab, VLC or anything else that registers transport controls,
+and the now-playing key shows the track with its album art. Use this if all you want is
+play/pause and skip.
+
+**Spotify** — Settings → Spotify. Spotify requires every user to register their own
+application, which is free and takes a minute: go to
+[developer.spotify.com/dashboard](https://developer.spotify.com/dashboard), create an app,
+add `http://127.0.0.1:8888/callback` as a redirect URI, then paste the client id into
+OpenBaseCamp and press Connect. Authorisation uses PKCE so **no client secret is stored**.
+Reading what is playing works on any account; changing playback is a Premium feature and
+needs an active Spotify device.
+
+**Twitch** — Settings → Twitch. Register an app at
+[dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps) with
+`http://localhost:3000/callback` as the OAuth redirect URL, then paste the client id and
+secret in and press Connect. Twitch does not support PKCE, so the secret is what lets the
+connection outlive the four-hour access token.
+
 **Aitum Desktop** — Settings → Aitum. Aitum's public API listens on `http://localhost:7777`
 with no authentication, so keep it on the local machine. Once enabled, the inspector can list
 your rules by name and bind one to a key, and state variables can be shown on a key face.
@@ -122,21 +154,26 @@ your rules by name and bind one to a key, and state variables can be shown on a 
 Saving is atomic; an unreadable config is copied to `config.json.broken` rather than
 overwritten.
 
+**A note on credentials.** The OBS password and the Spotify/Twitch OAuth tokens are stored in
+`config.json` as plain text, protected only by the file's user-scoped location. That is enough
+to keep them away from other user accounts on the machine, but anything running as you can
+read them. Do not share the file, and use Disconnect in Settings to revoke a stored token.
+
 ## Repository layout
 
 ```
 src/OpenBaseCamp.Core     Platform-neutral: model, config, rendering, actions, integrations
 src/OpenBaseCamp.App      Avalonia UI, Win32 services, DisplayPad SDK wrapper
-tests/                    88 tests over the core: rendering, actions, config, key mapping
+tests/                    116 tests over the core: rendering, actions, config, OAuth, presets
 tools/OpenBaseCamp.UiPreview  Renders the windows to PNG headlessly for UI review
 DisplayPad.SDK.Demo/      Mountain's original SDK sample, kept for reference
 Macro.docx                Mountain's macro and key-table reference
 ```
 
-`OpenBaseCamp.App` multi-targets `net8.0-windows` and `net8.0`. **`net8.0-windows` is the
-shipping target** — the plain `net8.0` build drops the SDK and the Win32 services so the UI
-can be compiled and screenshotted on a machine without a pad, which is how the preview tool
-and CI check the interface.
+`OpenBaseCamp.App` multi-targets `net8.0-windows10.0.19041.0` and `net8.0`.
+**`net8.0-windows10.0.19041.0` is the shipping target** — the plain `net8.0` build drops the
+SDK, the Win32 services and the WinRT media APIs so the UI can be compiled and screenshotted
+on a machine without a pad, which is how the preview tool and CI check the interface.
 
 ## How it drives the pad
 
@@ -160,8 +197,13 @@ changed, so a clock key does not re-push eleven unchanged neighbours every secon
   real `.bin`. Only use a file Mountain supplied for the DisplayPad.
 - **GPU usage** comes from the *GPU Engine* performance counters and reads `n/a` where those
   are unavailable.
-- **Twitch and the Adobe/DaVinci integrations** from Base Camp are not implemented. Those apps
-  are reachable today through Hotkey and Multi Action keys.
+- **Spotify and Twitch each need an application you register yourself.** Neither service
+  hands out a shareable client id for a desktop app, and Base Camp shipped its own registered
+  application. Now Playing needs no setup at all if you only want transport controls.
+- **The Spotify and Twitch calls have not been run against live accounts** from here; they are
+  written to the published Web API and Helix specifications.
+- **Preset shortcut packs use each application's stock defaults.** If you have remapped
+  shortcuts, edit the keys after adding the page.
 - The SDK writes its own log files into the application folder; that path is baked into the
   SDK and cannot be changed from outside.
 

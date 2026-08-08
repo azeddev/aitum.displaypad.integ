@@ -79,6 +79,17 @@ public static class PlatformFactory
         return new NullAudioController();
     }
 
+    public static IMediaSessionController CreateMediaSession()
+    {
+#if WINDOWS
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
+        {
+            return new WindowsMediaSessionController();
+        }
+#endif
+        return new NullMediaSessionController();
+    }
+
     public static ISystemMetricsProvider CreateMetrics()
     {
 #if WINDOWS

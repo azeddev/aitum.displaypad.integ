@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    net8.0-windows is the shipping target: it pulls in the DisplayPad SDK and the Win32
-    services. The plain net8.0 target builds the same UI without any of that, which is what
-    the tests and the UI preview harness use so the interface can be checked without hardware.
+    net8.0-windows10.0.19041.0 is the shipping target: it pulls in the DisplayPad SDK, the
+    Win32 services and the WinRT media-session projections. The plain net8.0 target builds the
+    same UI without any of that, which is what the UI preview harness uses so the interface can
+    be checked without hardware.
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net8.0-windows;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0-windows10.0.19041.0;net8.0</TargetFrameworks>
     <RootNamespace>OpenBaseCamp.App</RootNamespace>
     <AssemblyName>OpenBaseCamp</AssemblyName>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -16,7 +17,10 @@
     <SelfContained>false</SelfContained>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows10.0.19041.0'">
+    <!-- 19041 brings the WinRT projections used for the Windows media session
+         (now playing / transport controls). The app still runs on 1809. -->
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <!-- The native DisplayPadSDK.dll is x64 only. -->
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -31,12 +35,12 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows10.0.19041.0'">
     <PackageReference Include="DisplayPad.SDK" Version="1.0.6" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.1" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'net8.0-windows'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <Compile Remove="Services\Win32\**\*.cs" />
     <Compile Remove="Device\DisplayPadService.cs" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9" Condition="'$(OS)' != 'Windows_NT'" />

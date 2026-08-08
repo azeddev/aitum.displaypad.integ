@@ -264,6 +264,53 @@ public sealed class ActionExecutor
                 // Display-only keys.
                 return;
 
+            case ActionKind.MediaSession:
+            {
+                if (s.MediaSessionCommand == MediaSessionCommand.ShowNowPlaying)
+                {
+                    return;
+                }
+
+                if (!await _services.MediaSession.ExecuteAsync(s.MediaSessionCommand, cancellationToken).ConfigureAwait(false))
+                {
+                    _services.ReportError?.Invoke("No app is currently registered with Windows media controls.");
+                }
+
+                return;
+            }
+
+            case ActionKind.Spotify:
+            {
+                if (s.SpotifyCommand == SpotifyCommand.ShowNowPlaying)
+                {
+                    await _services.Spotify.RefreshNowPlayingAsync(force: true, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!await _services.Spotify.ExecuteAsync(s, cancellationToken).ConfigureAwait(false))
+                {
+                    _services.ReportError?.Invoke($"Spotify: {_services.Spotify.LastError ?? "the request failed."}");
+                }
+
+                return;
+            }
+
+            case ActionKind.Twitch:
+            {
+                if (s.TwitchCommand is TwitchCommand.ShowViewerCount or TwitchCommand.ShowLiveStatus)
+                {
+                    await _services.Twitch.RefreshStateAsync(force: true, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!await _services.Twitch.ExecuteAsync(s, cancellationToken).ConfigureAwait(false))
+                {
+                    _services.ReportError?.Invoke($"Twitch: {_services.Twitch.LastError ?? "the request failed."}");
+                }
+
+                return;
+            }
+
             case ActionKind.Delay:
                 await Task.Delay(Math.Max(0, s.DelayMs), cancellationToken).ConfigureAwait(false);
                 return;

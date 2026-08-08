@@ -86,6 +86,28 @@ public sealed class ActionSettings
     public string? AitumRuleName { get; set; }
     public string? AitumStateName { get; set; }
 
+    // Windows media session
+    public MediaSessionCommand MediaSessionCommand { get; set; }
+
+    /// <summary>Show the album/thumbnail art on the key face instead of the icon.</summary>
+    public bool ShowArtwork { get; set; } = true;
+
+    // Spotify
+    public SpotifyCommand SpotifyCommand { get; set; }
+
+    /// <summary>Playlist, album or track URI for SpotifyCommand.PlayContext.</summary>
+    public string? SpotifyUri { get; set; }
+
+    // Twitch
+    public TwitchCommand TwitchCommand { get; set; }
+
+    /// <summary>Title, category, chat message, announcement or channel name, per command.</summary>
+    public string? TwitchText { get; set; }
+
+    public int TwitchCommercialSeconds { get; set; } = 60;
+
+    public int TwitchSlowModeSeconds { get; set; } = 5;
+
     public ActionSettings Clone()
     {
         var copy = (ActionSettings)MemberwiseClone();

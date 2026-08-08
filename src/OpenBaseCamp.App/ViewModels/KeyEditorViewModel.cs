@@ -91,6 +91,12 @@ public sealed partial class KeyEditorViewModel : ObservableObject
 
     public IReadOnlyList<ObsCommand> ObsCommands { get; } = Enum.GetValues<ObsCommand>();
 
+    public IReadOnlyList<MediaSessionCommand> MediaSessionCommands { get; } = Enum.GetValues<MediaSessionCommand>();
+
+    public IReadOnlyList<SpotifyCommand> SpotifyCommands { get; } = Enum.GetValues<SpotifyCommand>();
+
+    public IReadOnlyList<TwitchCommand> TwitchCommands { get; } = Enum.GetValues<TwitchCommand>();
+
     public IReadOnlyList<MacroPlayMode> MacroPlayModes { get; } = Enum.GetValues<MacroPlayMode>();
 
     public IReadOnlyList<IconFit> IconFits { get; } = Enum.GetValues<IconFit>();
@@ -230,6 +236,31 @@ public sealed partial class KeyEditorViewModel : ObservableObject
 
     public bool IsAitumState => Kind == ActionKind.AitumState;
 
+    public bool IsMediaSession => Kind == ActionKind.MediaSession;
+
+    public bool IsSpotify => Kind == ActionKind.Spotify;
+
+    public bool IsSpotifyUri => IsSpotify && Settings.SpotifyCommand == SpotifyCommand.PlayContext;
+
+    public bool IsSpotifyVolume => IsSpotify && Settings.SpotifyCommand == SpotifyCommand.SetVolume;
+
+    public bool IsSpotifyStep => IsSpotify && Settings.SpotifyCommand is SpotifyCommand.VolumeUp or SpotifyCommand.VolumeDown;
+
+    public bool IsTwitch => Kind == ActionKind.Twitch;
+
+    public bool IsTwitchText => IsTwitch && Settings.TwitchCommand is TwitchCommand.SetTitle
+        or TwitchCommand.SetCategory or TwitchCommand.SendChatMessage
+        or TwitchCommand.SendAnnouncement or TwitchCommand.Shoutout or TwitchCommand.CreateMarker;
+
+    public bool IsTwitchCommercial => IsTwitch && Settings.TwitchCommand == TwitchCommand.StartCommercial;
+
+    public bool IsTwitchSlowMode => IsTwitch && Settings.TwitchCommand == TwitchCommand.ToggleSlowMode;
+
+    /// <summary>The artwork toggle only makes sense on the two now-playing readouts.</summary>
+    public bool IsArtworkCapable =>
+        (IsMediaSession && Settings.MediaSessionCommand == MediaSessionCommand.ShowNowPlaying)
+        || (IsSpotify && Settings.SpotifyCommand == SpotifyCommand.ShowNowPlaying);
+
     private void RaiseVisibility()
     {
         foreach (var name in new[]
@@ -241,6 +272,9 @@ public sealed partial class KeyEditorViewModel : ObservableObject
                      nameof(IsMonitorAitum), nameof(IsMultiAction), nameof(IsDelay), nameof(IsObs),
                      nameof(IsObsScene), nameof(IsObsSource), nameof(IsObsFilter), nameof(IsObsTransition),
                      nameof(IsAitumRule), nameof(IsAitumState), nameof(MacroSummary), nameof(StepsSummary),
+                     nameof(IsMediaSession), nameof(IsSpotify), nameof(IsSpotifyUri), nameof(IsSpotifyVolume),
+                     nameof(IsSpotifyStep), nameof(IsTwitch), nameof(IsTwitchText), nameof(IsTwitchCommercial),
+                     nameof(IsTwitchSlowMode), nameof(IsArtworkCapable),
                  })
         {
             OnPropertyChanged(name);
@@ -577,6 +611,106 @@ public sealed partial class KeyEditorViewModel : ObservableObject
             OnPropertyChanged();
             Apply();
         }
+    }
+
+    // ---- Media session, Spotify and Twitch ----------------------------------
+
+    public MediaSessionCommand MediaSessionCommand
+    {
+        get => Settings.MediaSessionCommand;
+        set
+        {
+            if (Settings.MediaSessionCommand == value)
+            {
+                return;
+            }
+
+            Settings.MediaSessionCommand = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsArtworkCapable));
+            Apply();
+        }
+    }
+
+    public bool ShowArtwork
+    {
+        get => Settings.ShowArtwork;
+        set => Set(v => Settings.ShowArtwork = v, value, Settings.ShowArtwork);
+    }
+
+    public SpotifyCommand SpotifyCommand
+    {
+        get => Settings.SpotifyCommand;
+        set
+        {
+            if (Settings.SpotifyCommand == value)
+            {
+                return;
+            }
+
+            Settings.SpotifyCommand = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsSpotifyUri));
+            OnPropertyChanged(nameof(IsSpotifyVolume));
+            OnPropertyChanged(nameof(IsSpotifyStep));
+            OnPropertyChanged(nameof(IsArtworkCapable));
+            Apply();
+        }
+    }
+
+    public string SpotifyUri
+    {
+        get => Settings.SpotifyUri ?? string.Empty;
+        set => Set(v => Settings.SpotifyUri = v, value, Settings.SpotifyUri ?? string.Empty);
+    }
+
+    public TwitchCommand TwitchCommand
+    {
+        get => Settings.TwitchCommand;
+        set
+        {
+            if (Settings.TwitchCommand == value)
+            {
+                return;
+            }
+
+            Settings.TwitchCommand = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTwitchText));
+            OnPropertyChanged(nameof(IsTwitchCommercial));
+            OnPropertyChanged(nameof(IsTwitchSlowMode));
+            OnPropertyChanged(nameof(TwitchTextLabel));
+            Apply();
+        }
+    }
+
+    public string TwitchText
+    {
+        get => Settings.TwitchText ?? string.Empty;
+        set => Set(v => Settings.TwitchText = v, value, Settings.TwitchText ?? string.Empty);
+    }
+
+    public string TwitchTextLabel => Settings.TwitchCommand switch
+    {
+        TwitchCommand.SetTitle => "Stream title",
+        TwitchCommand.SetCategory => "Category (exact Twitch name)",
+        TwitchCommand.SendChatMessage => "Chat message",
+        TwitchCommand.SendAnnouncement => "Announcement",
+        TwitchCommand.Shoutout => "Channel to shout out",
+        TwitchCommand.CreateMarker => "Marker description",
+        _ => "Text",
+    };
+
+    public int TwitchCommercialSeconds
+    {
+        get => Settings.TwitchCommercialSeconds;
+        set => Set(v => Settings.TwitchCommercialSeconds = Math.Clamp(v, 30, 180), value, Settings.TwitchCommercialSeconds);
+    }
+
+    public int TwitchSlowModeSeconds
+    {
+        get => Settings.TwitchSlowModeSeconds;
+        set => Set(v => Settings.TwitchSlowModeSeconds = Math.Clamp(v, 3, 120), value, Settings.TwitchSlowModeSeconds);
     }
 
     // ---- Appearance ---------------------------------------------------------

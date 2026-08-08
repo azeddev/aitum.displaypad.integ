@@ -41,10 +41,25 @@ public static class KeyImageRenderer
         var hasValue = !string.IsNullOrWhiteSpace(request.ValueText);
 
         var content = new SKRect(0, 0, size, size);
-        var titleHeight = hasTitle ? (float)appearance.TitleSize * scale * 1.55f : 0f;
+
+        // The band has to be measured from the wrapped lines, otherwise a title that wraps
+        // onto a second line is drawn past the bottom edge of the key.
+        List<string>? lines = null;
+        var lineHeight = 0f;
+        var titleHeight = 0f;
 
         if (hasTitle)
         {
+            using var measure = new SKPaint
+            {
+                Typeface = ResolveTypeface(appearance.TitleFont, appearance.TitleBold),
+                TextSize = (float)appearance.TitleSize * scale,
+            };
+
+            lines = WrapText(title!, measure, size * 0.94f, maxLines: 2);
+            lineHeight = measure.TextSize * 1.12f;
+            titleHeight = Math.Min(size * 0.55f, lineHeight * lines.Count + measure.TextSize * 0.45f);
+
             content = appearance.TitlePosition switch
             {
                 TitlePosition.Top => new SKRect(0, titleHeight, size, size),
@@ -65,9 +80,9 @@ public static class KeyImageRenderer
             DrawGauge(canvas, size, gauge, scale);
         }
 
-        if (hasTitle)
+        if (hasTitle && lines is not null)
         {
-            DrawTitle(canvas, size, title!, appearance, scale, titleHeight);
+            DrawTitle(canvas, size, lines, appearance, scale, titleHeight, lineHeight);
         }
 
         if (request.IsActive)
@@ -110,6 +125,21 @@ public static class KeyImageRenderer
 
     private static SKBitmap? LoadUserImage(KeyRenderRequest request)
     {
+        if (request.ImageOverride is { Length: > 0 } bytes)
+        {
+            try
+            {
+                if (SKBitmap.Decode(bytes) is { } decoded)
+                {
+                    return decoded;
+                }
+            }
+            catch (Exception)
+            {
+                // Fall through to the configured image.
+            }
+        }
+
         var file = request.Appearance.ImageFile;
         if (string.IsNullOrWhiteSpace(file))
         {
@@ -223,7 +253,14 @@ public static class KeyImageRenderer
         canvas.DrawText(value, content.MidX, baseline, paint);
     }
 
-    private static void DrawTitle(SKCanvas canvas, int size, string title, KeyAppearance appearance, float scale, float bandHeight)
+    private static void DrawTitle(
+        SKCanvas canvas,
+        int size,
+        List<string> lines,
+        KeyAppearance appearance,
+        float scale,
+        float bandHeight,
+        float lineHeight)
     {
         var color = ParseColor(appearance.TitleColor, SKColors.White);
         using var paint = new SKPaint
@@ -235,8 +272,6 @@ public static class KeyImageRenderer
             TextAlign = SKTextAlign.Center,
         };
 
-        var lines = WrapText(title, paint, size * 0.94f, maxLines: 2);
-        var lineHeight = paint.TextSize * 1.12f;
         var block = lineHeight * lines.Count;
 
         var top = appearance.TitlePosition switch
@@ -245,6 +280,10 @@ public static class KeyImageRenderer
             TitlePosition.Bottom => size - bandHeight + (bandHeight - block) / 2f,
             _ => (size - block) / 2f,
         };
+
+        // Never let the last baseline fall outside the key.
+        var maxTop = size - block - size * 0.02f;
+        top = Math.Clamp(top, size * 0.02f, Math.Max(size * 0.02f, maxTop));
 
         using var outline = new SKPaint
         {

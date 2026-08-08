@@ -120,6 +120,12 @@ public sealed class ActionServices
 
     public required Integrations.Aitum.AitumClient Aitum { get; init; }
 
+    public required Integrations.Spotify.SpotifyClient Spotify { get; init; }
+
+    public required Integrations.Twitch.TwitchClient Twitch { get; init; }
+
+    public required IMediaSessionController MediaSession { get; init; }
+
     /// <summary>Surfaces a problem to the user without throwing out of a key press.</summary>
     public Action<string>? ReportError { get; init; }
 }

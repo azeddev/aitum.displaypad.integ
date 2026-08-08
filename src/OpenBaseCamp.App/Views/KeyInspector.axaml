@@ -207,6 +207,64 @@
         <Button Content="Reload lists from OBS" Command="{Binding RefreshObsCommand}" HorizontalAlignment="Stretch" />
       </StackPanel>
 
+      <!-- Windows media session -->
+      <StackPanel Spacing="6" IsVisible="{Binding IsMediaSession}">
+        <TextBlock Text="Media command" Classes="h2" />
+        <ComboBox ItemsSource="{Binding MediaSessionCommands}" SelectedItem="{Binding MediaSessionCommand}" HorizontalAlignment="Stretch" />
+        <TextBlock Text="Controls whatever app currently owns the Windows media controls - Spotify, a browser tab, VLC. No accounts or setup needed."
+                   Classes="hint" />
+      </StackPanel>
+
+      <!-- Spotify -->
+      <StackPanel Spacing="6" IsVisible="{Binding IsSpotify}">
+        <TextBlock Text="Spotify command" Classes="h2" />
+        <ComboBox ItemsSource="{Binding SpotifyCommands}" SelectedItem="{Binding SpotifyCommand}" HorizontalAlignment="Stretch" />
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsSpotifyUri}">
+          <TextBlock Text="Playlist, album or track URI" Classes="h2" />
+          <TextBox Text="{Binding SpotifyUri}" Watermark="spotify:playlist:37i9dQZF1DXcBWIGoYBM5M" />
+          <TextBlock Text="In Spotify, right-click an item and choose Share → Copy Spotify URI." Classes="hint" />
+        </StackPanel>
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsSpotifyVolume}">
+          <TextBlock Text="Volume (%)" Classes="h2" />
+          <NumericUpDown Value="{Binding VolumeLevel}" Minimum="0" Maximum="100" Increment="1" />
+        </StackPanel>
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsSpotifyStep}">
+          <TextBlock Text="Step (%)" Classes="h2" />
+          <NumericUpDown Value="{Binding VolumeStep}" Minimum="1" Maximum="50" Increment="1" />
+        </StackPanel>
+
+        <TextBlock Text="Playback control needs Spotify Premium and an active device. Connect the account in Settings → Spotify."
+                   Classes="hint" />
+      </StackPanel>
+
+      <CheckBox Content="Show album art on the key" IsChecked="{Binding ShowArtwork}" IsVisible="{Binding IsArtworkCapable}" />
+
+      <!-- Twitch -->
+      <StackPanel Spacing="6" IsVisible="{Binding IsTwitch}">
+        <TextBlock Text="Twitch command" Classes="h2" />
+        <ComboBox ItemsSource="{Binding TwitchCommands}" SelectedItem="{Binding TwitchCommand}" HorizontalAlignment="Stretch" />
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsTwitchText}">
+          <TextBlock Text="{Binding TwitchTextLabel}" Classes="h2" />
+          <TextBox Text="{Binding TwitchText}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsTwitchCommercial}">
+          <TextBlock Text="Ad length (seconds)" Classes="h2" />
+          <NumericUpDown Value="{Binding TwitchCommercialSeconds}" Minimum="30" Maximum="180" Increment="30" />
+        </StackPanel>
+
+        <StackPanel Spacing="4" IsVisible="{Binding IsTwitchSlowMode}">
+          <TextBlock Text="Slow mode delay (seconds)" Classes="h2" />
+          <NumericUpDown Value="{Binding TwitchSlowModeSeconds}" Minimum="3" Maximum="120" Increment="1" />
+        </StackPanel>
+
+        <TextBlock Text="Connect the channel in Settings → Twitch." Classes="hint" />
+      </StackPanel>
+
       <!-- Aitum -->
       <StackPanel Spacing="6" IsVisible="{Binding IsAitumRule}">
         <TextBlock Text="Aitum rule" Classes="h2" />
